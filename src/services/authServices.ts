@@ -106,16 +106,16 @@ export const loginUser = async (data: AuthData, res: Response) => {
     );
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", 
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 3600000,
-    })
+    });
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", 
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 2592000000, // 30 days
-    })
+    });
     res.header("Authorization", `Bearer ${accessToken}`);
     return {
       message: "Login successful",
@@ -129,6 +129,59 @@ export const loginUser = async (data: AuthData, res: Response) => {
         tokens: {
           accessToken,
           refreshToken,
+        },
+      },
+    };
+  } catch (error: any) {
+    return {
+      message: error.message || "Internal Server Error",
+      code: 500,
+      success: false,
+    };
+  }
+};
+
+export const refreshAccessToken = async (
+  refreshToken: string,
+  res: Response
+) => {
+  try {
+    if (!refreshToken) {
+      return {
+        message: "Refresh token is required",
+        code: 400,
+        success: false,
+      };
+    }
+    let decoded: any;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_SECRET as string);
+    } catch (err) {
+      return {
+        message: "Invalid refresh token",
+        code: 401,
+        success: false,
+      };
+    }
+    const newAccessToken = jwt.sign(
+      { userId: decoded.userId, email: decoded.email },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "1h" }
+    );
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 3600000,
+    });
+    res.header("Authorization", `Bearer ${newAccessToken}`);
+    return {
+      message: "Access token refreshed successfully",
+      code: 200,
+      success: true,
+      data: {
+        tokens: {
+          accessToken: newAccessToken,
         },
       },
     };

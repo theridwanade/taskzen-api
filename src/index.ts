@@ -2,12 +2,14 @@ import express from "express";
 import morgan from "morgan";
 import "dotenv/config";
 import authRoutes from "./routes/auth";
+import cookieParser from "cookie-parser";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(morgan("dev"))
+app.use(cookieParser());
+app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
   res.send("Hello, TaskZen API!");

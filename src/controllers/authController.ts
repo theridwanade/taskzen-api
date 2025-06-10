@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { registerUser, loginUser } from "../services/authServices";
+import { registerUser, loginUser, refreshAccessToken } from "../services/authServices";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -49,3 +49,19 @@ export const logout = async (req: Request, res: Response) => {
     });
   }
 }
+
+export const refresh = async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = req.cookies;
+      const result = await refreshAccessToken(refreshToken, res);
+      res.status(result!.code).json(result);
+      return;
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Internal Server Error",
+        code: 500,
+        success: false
+      });
+    }
+  
+} 
