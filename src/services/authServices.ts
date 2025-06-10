@@ -1,12 +1,12 @@
-import { PrismaClient } from "../generated/prisma";
 import bcrypt from "bcrypt";
+import { prisma } from "../utils/lib";
 
 interface AuthData {
   email: string;
   password: string;
 }
 
-const prisma = new PrismaClient();
+
 
 export const registerUser = async (data: AuthData) => {
   try {
