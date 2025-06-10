@@ -29,3 +29,23 @@ export const login = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    res.setHeader('Authorization', '');
+    res.status(200).json({
+      message: "Logged out successfully",
+      code: 200,
+      success: true
+    });
+    return;
+  } catch (error: any) {
+    res.status(500).json({
+      message: error.message || "Internal Server Error",
+      code: 500,
+      success: false
+    });
+  }
+}
