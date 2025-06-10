@@ -1,12 +1,13 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../utils/lib";
+import jwt from "jsonwebtoken";
+import { Response } from "express";
+// Define the interface for authentication data
 
 interface AuthData {
   email: string;
   password: string;
 }
-
-
 
 export const registerUser = async (data: AuthData) => {
   try {
@@ -57,7 +58,7 @@ export const registerUser = async (data: AuthData) => {
   }
 };
 
-export const loginUser = async (data: AuthData) => {
+export const loginUser = async (data: AuthData, res: Response) => {
   try {
     const { email, password } = data;
     if (!email || !password) {
@@ -89,6 +90,33 @@ export const loginUser = async (data: AuthData) => {
       };
     }
 
+    const accessToken = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET as string,
+      {
+        expiresIn: "1h",
+      }
+    );
+    const refreshToken = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET as string,
+      {
+        expiresIn: "14d",
+      }
+    );
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", 
+      sameSite: "strict",
+      maxAge: 3600000,
+    })
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", 
+      sameSite: "strict",
+      maxAge: 2592000000, // 30 days
+    })
+    res.header("Authorization", `Bearer ${accessToken}`);
     return {
       message: "Login successful",
       code: 200,
@@ -97,6 +125,10 @@ export const loginUser = async (data: AuthData) => {
         user: {
           id: user.id,
           email: user.email,
+        },
+        tokens: {
+          accessToken,
+          refreshToken,
         },
       },
     };
